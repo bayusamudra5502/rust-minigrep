@@ -1,5 +1,8 @@
 use std::env;
 
+const CASE_INSENSITIVE_PARAM: &str = "--case-insensitive";
+const CASE_SENSITIVE_PARAM: &str = "--case-sensitive";
+
 pub struct Config<'a> {
   pub query: &'a str,
   pub file_path: &'a str,
@@ -26,10 +29,10 @@ impl<'a> Config<'a> {
       let mut idx = 0;
 
       for word in args {
-        if word == "--ignore-case" {
+        if word == CASE_INSENSITIVE_PARAM {
           ignore_case = true;
           continue;
-        } else if word == "--case-sensitive" {
+        } else if word == CASE_SENSITIVE_PARAM {
           ignore_case = false;
           continue;
         } else if idx == 1 {
