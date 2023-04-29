@@ -8,23 +8,31 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let file = File::open(config.file_path)?;
     let buffer = BufReader::new(file);
 
-    let query = if config.ignore_case {
-        config.query.to_lowercase()
+    let line_iters = buffer.lines().map(|line| line.unwrap());
+    let results = if config.ignore_case {
+        filter_case_insensitive(line_iters, &config.query)
     } else {
-        config.query
+        filter_case_sensitive(line_iters, &config.query)
     };
-
-    let results = buffer.lines().map(|line| line.unwrap()).filter(|line| {
-        if config.ignore_case {
-            line.to_lowercase().contains(&query)
-        } else {
-            line.contains(&query)
-        }
-    });
 
     for line in results {
         println!("{}", line);
     }
 
     Ok(())
+}
+
+pub fn filter_case_sensitive<'a>(
+    it: impl Iterator<Item = String> + 'a,
+    query: &'a str,
+) -> Box<dyn Iterator<Item = String> + 'a> {
+    Box::new(it.filter(move |line| line.contains(&query)))
+}
+
+pub fn filter_case_insensitive<'a>(
+    it: impl Iterator<Item = String> + 'a,
+    query: &'a str,
+) -> Box<dyn Iterator<Item = String> + 'a> {
+    let query = query.to_lowercase();
+    Box::new(it.filter(move |line| line.to_lowercase().contains(&query)))
 }

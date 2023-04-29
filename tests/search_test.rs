@@ -1,19 +1,21 @@
 use minigrep::run::*;
 
 #[test]
-#[ignore = "deprecated"]
 fn test_search() {
     let query = "duct";
     let contents = "\
-  Rust:
-  safe, fast, productive.
-  Pick three.";
+Rust:
+safe, fast, productive.
+Pick three.";
 
-    // assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+    let string_lines = contents.lines().map(|l| String::from(l));
+    let it = filter_case_sensitive(string_lines, query);
+    let collected: Vec<String> = it.collect();
+
+    assert_eq!(vec!["safe, fast, productive."], collected);
 }
 
 #[test]
-#[ignore = "deprecated"]
 fn case_insensitive() {
     let query = "rUsT";
     let contents = "\
@@ -22,8 +24,9 @@ safe, fast, productive.
 Pick three.
 Trust me.";
 
-    // assert_eq!(
-    //     vec!["Rust:", "Trust me."],
-    //     search_case_insensitive(query, contents)
-    // );
+    let string_lines = contents.lines().map(|l| String::from(l));
+    let it = filter_case_insensitive(string_lines, query);
+    let collected: Vec<String> = it.collect();
+
+    assert_eq!(vec!["Rust:", "Trust me."], collected);
 }
