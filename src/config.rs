@@ -3,47 +3,57 @@ use std::env;
 const CASE_INSENSITIVE_PARAM: &str = "--case-insensitive";
 const CASE_SENSITIVE_PARAM: &str = "--case-sensitive";
 
-pub struct Config<'a> {
-  pub query: &'a str,
-  pub file_path: &'a str,
-  pub ignore_case: bool
+#[derive(Debug)]
+pub struct Config {
+    pub query: String,
+    pub file_path: String,
+    pub ignore_case: bool,
 }
 
-impl<'a> Config<'a> {
-    pub fn new(query: &'a str, file_path: &'a str, ignore_case: bool) -> Config<'a> {
-      Config {
-        query,
-        file_path,
-        ignore_case
-      }
+impl Config {
+    pub fn new(query: String, file_path: String, ignore_case: bool) -> Config {
+        Config {
+            query,
+            file_path,
+            ignore_case,
+        }
     }
 
-    pub fn parse(args: &[String]) -> Result<Config, &str> {
-      if args.len() < 3 {
-        return Err("not enough arguments");
-      }
-    
-      let mut query: Result<&str, &str> = Err("query is empty");
-      let mut file_path: Result<&str, &str> = Err("file path is empty");
-      let mut ignore_case = env::var("IGNORE_CASE").is_ok();
-      let mut idx = 0;
+    pub fn parse(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        let mut query: Result<String, &str> = Err("query is empty");
+        let mut file_path: Result<String, &str> = Err("file path is empty");
+        let mut ignore_case = env::var("IGNORE_CASE").is_ok();
+        let mut is_end = false;
 
-      for word in args {
-        if word == CASE_INSENSITIVE_PARAM {
-          ignore_case = true;
-          continue;
-        } else if word == CASE_SENSITIVE_PARAM {
-          ignore_case = false;
-          continue;
-        } else if idx == 1 {
-            query = Ok(&word);
-        } else if idx == 2 {
-            file_path = Ok(word);
+        let mut is_query = true;
+        let mut is_path = false;
+
+        args.next();
+
+        while !is_end {
+            match args.next() {
+                Some(str) => match str.as_str() {
+                    CASE_INSENSITIVE_PARAM => ignore_case = true,
+                    CASE_SENSITIVE_PARAM => ignore_case = false,
+                    _ => {
+                        if str.starts_with("-") {
+                            return Err("unknown parameter");
+                        }
+
+                        if is_query {
+                            query = Ok(str);
+                            is_query = false;
+                            is_path = true;
+                        } else if is_path {
+                            file_path = Ok(str);
+                            is_path = false;
+                        }
+                    }
+                },
+                None => is_end = true,
+            }
         }
 
-        idx += 1;
-      }
-    
-      Ok(Config::new(query?, file_path?, ignore_case))
+        Ok(Config::new(query?, file_path?, ignore_case))
     }
 }
